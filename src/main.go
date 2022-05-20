@@ -1,9 +1,11 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"flag"
+	"time"
+	"sync"
+	"github.com/valyala/fasthttp"
 )
 
 // Colors
@@ -12,9 +14,19 @@ var red string = "\033[31m"
 var green string = "\033[32m"
 var blue string = "\033[34m"
 
-var target string = "google.com"
-var reqps int = 100
-var duration int = 10
+var target string
+var req int
+var duration int
+
+var success int = 0
+var errors int = 0
+
+func init() {
+	flag.StringVar(&target, "t", "google.com", "Specify target / domain.")
+	flag.IntVar(&req, "r", 100, "Specify number of requests.")
+	flag.IntVar(&duration, "d", 10, "Specify duration in seconds.")
+	flag.Parse()
+}
 
 func main() {
 	fmt.Println(green)
@@ -26,17 +38,39 @@ func main() {
 	fmt.Println("╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝ ╚═╝   ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ")
 	fmt.Println(reset)
 
-	if(len(os.Args) != 1){
-		target = os.Args[1]
-	}
-
-	flag.IntVar(&reqps, "rps", 100, "Specify Requests per second.")
-	flag.IntVar(&duration, "duration", 10, "Specify duration in seconds.")
-	flag.Parse()
-
 	fmt.Println("Target: " + blue + target + reset)	
-	fmt.Printf("Requests per sec: %s%d%s\n", blue, reqps, reset)
-	fmt.Printf("Duration: %s%ds%s\n", blue, duration, reset)
+	fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
+	fmt.Printf("Duration: %s%ds%s\n\n", blue, duration, reset)
+
+	wg := new(sync.WaitGroup)
+	
+	var client = &fasthttp.Client{
+		MaxConnsPerHost: req*2,
+	}
+	
+	start := time.Now()
+	for i:=1; i <= req; i++{
+		wg.Add(1)
+		go func(){
+			defer wg.Done()
+			var body []byte
+			status, _, _ := client.Get(body, target)
+			if(status == 200){
+				success++;
+			}else{
+				errors++;
+			}
+		}()
+	}
+	wg.Wait()
+	secs := time.Since(start).Seconds()
+	fmt.Printf("%s%d%s requests where performed in %s%fs%s\n", green, success+errors, reset, green, secs, reset)
+	fmt.Printf("Success: %s%d%s\n", green, success, reset)
+	if(errors == 0){
+		fmt.Printf("Errors: %s%d%s\n", green, errors, reset)
+	}else{
+		fmt.Printf("Errors: %s%d%s\n", red, errors, reset)
+	}
 
 	fmt.Println(reset)
 }
