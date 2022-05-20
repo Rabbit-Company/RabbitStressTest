@@ -95,6 +95,8 @@ func main() {
 		fmt.Printf("---------------------\n")
 		fmt.Printf("Error rate: %s%.2f%%%s\n", red, (float32(errors)/float32(success+errors)*100), reset)
 	}
+	fmt.Printf("---------------------\n")
+	fmt.Printf("Requests per second: %s%.2f%s\n", green, float32(success+errors)/float32(secs), reset)
 
 	fmt.Println(reset)
 }
