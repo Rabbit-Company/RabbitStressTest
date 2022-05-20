@@ -22,7 +22,7 @@ var success int = 0
 var errors int = 0
 
 func init() {
-	flag.StringVar(&target, "t", "google.com", "Specify target / domain.")
+	flag.StringVar(&target, "t", "https://google.com", "Specify target / url.")
 	flag.IntVar(&req, "r", 100, "Specify number of requests.")
 	flag.IntVar(&duration, "d", 10, "Specify duration in seconds.")
 	flag.Parse()
@@ -42,7 +42,7 @@ func main() {
 	fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
 	fmt.Printf("Duration: %s%ds%s\n\n", blue, duration, reset)
 
-	wg := new(sync.WaitGroup)
+	var wg sync.WaitGroup
 	
 	var client = &fasthttp.Client{
 		MaxConnsPerHost: req*2,
