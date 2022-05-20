@@ -14,9 +14,12 @@ var red string = "\033[31m"
 var green string = "\033[32m"
 var blue string = "\033[34m"
 
+const maxInt int = int(^uint(0) >> 1)
+
 var target string
 var req int
 var duration int
+var delay int
 
 var success int = 0
 var errors int = 0
@@ -24,7 +27,8 @@ var errors int = 0
 func init() {
 	flag.StringVar(&target, "t", "https://google.com", "Specify target / url.")
 	flag.IntVar(&req, "r", 100, "Specify number of requests.")
-	flag.IntVar(&duration, "d", 10, "Specify duration in seconds.")
+	flag.IntVar(&duration, "d", 0, "Specify duration in seconds.")
+	flag.IntVar(&delay, "w", 1, "Specify delay in milliseconds.")
 	flag.Parse()
 }
 
@@ -38,18 +42,32 @@ func main() {
 	fmt.Println("╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝ ╚═╝   ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ")
 	fmt.Println(reset)
 
-	fmt.Println("Target: " + blue + target + reset)	
-	fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
-	fmt.Printf("Duration: %s%ds%s\n\n", blue, duration, reset)
+	fmt.Println("Target: " + blue + target + reset)
+	if(duration != 0){
+		req = maxInt
+		fmt.Printf("Duration: %s%ds%s\n", blue, duration, reset)
+	}else{
+		fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
+	}
 
 	var wg sync.WaitGroup
 	
 	var client = &fasthttp.Client{
-		MaxConnsPerHost: req*2,
+		MaxConnsPerHost: maxInt,
+		MaxIdleConnDuration: 500,
+		Dial: (&fasthttp.TCPDialer{
+			Concurrency: maxInt,
+		}).Dial,
 	}
 	
 	start := time.Now()
 	for i:=1; i <= req; i++{
+		if(duration != 0){
+			if(time.Since(start).Seconds() >= float64(duration)){
+				break
+			}
+			time.Sleep(time.Duration(delay) * time.Millisecond)
+		}
 		wg.Add(1)
 		go func(){
 			defer wg.Done()
@@ -64,13 +82,16 @@ func main() {
 	}
 	wg.Wait()
 	secs := time.Since(start).Seconds()
-	fmt.Printf("%s%d%s requests where performed in %s%fs%s\n", green, success+errors, reset, green, secs, reset)
+	fmt.Printf("\n%s%d%s requests where performed in %s%.2fs%s\n", green, success+errors, reset, green, secs, reset)
+	fmt.Printf("---------------------\n")
 	fmt.Printf("Success: %s%d%s\n", green, success, reset)
 	if(errors == 0){
 		fmt.Printf("Errors: %s%d%s\n", green, errors, reset)
 	}else{
 		fmt.Printf("Errors: %s%d%s\n", red, errors, reset)
 	}
+	fmt.Printf("---------------------\n")
+	fmt.Printf("Success rate: %s%.2f%%%s\n", green, (float32(success)/float32(success+errors)*100), reset)
 
 	fmt.Println(reset)
 }
