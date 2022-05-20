@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"flag"
-	"time"
-	"sync"
+	"fmt"
 	"github.com/valyala/fasthttp"
+	"sync"
+	"time"
 )
 
 // Colors
@@ -43,41 +43,41 @@ func main() {
 	fmt.Println(reset)
 
 	fmt.Println("Target: " + blue + target + reset)
-	if(duration != 0){
+	if duration != 0 {
 		req = maxInt
 		fmt.Printf("Duration: %s%ds%s\n", blue, duration, reset)
-	}else{
+	} else {
 		fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
 	}
 	fmt.Printf("Delay: %s%dms%s\n", blue, delay, reset)
 
 	var wg sync.WaitGroup
-	
+
 	var client = &fasthttp.Client{
-		MaxConnsPerHost: maxInt,
+		MaxConnsPerHost:     maxInt,
 		MaxIdleConnDuration: 500,
 		Dial: (&fasthttp.TCPDialer{
 			Concurrency: maxInt,
 		}).Dial,
 	}
-	
+
 	start := time.Now()
-	for i:=1; i <= req; i++{
-		if(duration != 0){
-			if(time.Since(start).Seconds() >= float64(duration)){
+	for i := 1; i <= req; i++ {
+		if duration != 0 {
+			if time.Since(start).Seconds() >= float64(duration) {
 				break
 			}
 		}
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 		wg.Add(1)
-		go func(){
+		go func() {
 			defer wg.Done()
 			var body []byte
 			status, _, _ := client.Get(body, target)
-			if(status == 200){
-				success++;
-			}else{
-				errors++;
+			if status == 200 {
+				success++
+			} else {
+				errors++
 			}
 		}()
 	}
@@ -86,14 +86,14 @@ func main() {
 	fmt.Printf("\n%s%d%s requests where performed in %s%.2fs%s\n", green, success+errors, reset, green, secs, reset)
 	fmt.Printf("---------------------\n")
 	fmt.Printf("Success: %s%d%s\n", green, success, reset)
-	if(errors == 0){
+	if errors == 0 {
 		fmt.Printf("Errors: %s%d%s\n", green, errors, reset)
 		fmt.Printf("---------------------\n")
-		fmt.Printf("Error rate: %s%.2f%%%s\n", green, (float32(errors)/float32(success+errors)*100), reset)
-	}else{
+		fmt.Printf("Error rate: %s%.2f%%%s\n", green, (float32(errors) / float32(success+errors) * 100), reset)
+	} else {
 		fmt.Printf("Errors: %s%d%s\n", red, errors, reset)
 		fmt.Printf("---------------------\n")
-		fmt.Printf("Error rate: %s%.2f%%%s\n", red, (float32(errors)/float32(success+errors)*100), reset)
+		fmt.Printf("Error rate: %s%.2f%%%s\n", red, (float32(errors) / float32(success+errors) * 100), reset)
 	}
 	fmt.Printf("---------------------\n")
 	fmt.Printf("Requests per second: %s%.2f%s\n", green, float32(success+errors)/float32(secs), reset)
