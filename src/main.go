@@ -49,6 +49,7 @@ func main() {
 	}else{
 		fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
 	}
+	fmt.Printf("Delay: %s%dms%s\n", blue, delay, reset)
 
 	var wg sync.WaitGroup
 	
@@ -66,8 +67,8 @@ func main() {
 			if(time.Since(start).Seconds() >= float64(duration)){
 				break
 			}
-			time.Sleep(time.Duration(delay) * time.Millisecond)
 		}
+		time.Sleep(time.Duration(delay) * time.Millisecond)
 		wg.Add(1)
 		go func(){
 			defer wg.Done()
@@ -87,11 +88,13 @@ func main() {
 	fmt.Printf("Success: %s%d%s\n", green, success, reset)
 	if(errors == 0){
 		fmt.Printf("Errors: %s%d%s\n", green, errors, reset)
+		fmt.Printf("---------------------\n")
+		fmt.Printf("Error rate: %s%.2f%%%s\n", green, (float32(errors)/float32(success+errors)*100), reset)
 	}else{
 		fmt.Printf("Errors: %s%d%s\n", red, errors, reset)
+		fmt.Printf("---------------------\n")
+		fmt.Printf("Error rate: %s%.2f%%%s\n", red, (float32(errors)/float32(success+errors)*100), reset)
 	}
-	fmt.Printf("---------------------\n")
-	fmt.Printf("Success rate: %s%.2f%%%s\n", green, (float32(success)/float32(success+errors)*100), reset)
 
 	fmt.Println(reset)
 }
