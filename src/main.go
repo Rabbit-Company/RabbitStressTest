@@ -12,9 +12,7 @@ import (
 
 // Colors
 var reset string = "\033[0m"
-var red string = "\033[31m"
 var green string = "\033[32m"
-var blue string = "\033[34m"
 
 const maxInt int = int(^uint(0) >> 1)
 
