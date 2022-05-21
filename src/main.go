@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"github.com/valyala/fasthttp"
 	"github.com/aquasecurity/table"
+	"github.com/valyala/fasthttp"
+	"os"
 	"sync"
 	"time"
 )
