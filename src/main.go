@@ -62,7 +62,7 @@ func main() {
 	}
 
 	start := time.Now()
-	for i := 1; i <= req; i++ {
+	for i := 1; i <= req/10; i++ {
 		if duration != 0 {
 			if time.Since(start).Seconds() >= float64(duration) {
 				break
@@ -73,11 +73,13 @@ func main() {
 		go func() {
 			defer wg.Done()
 			var body []byte
-			status, _, _ := client.Get(body, target)
-			if status == 200 {
-				success++
-			} else {
-				errors++
+			for j := 1; j <= 10; j++ {
+				status, _, _ := client.Get(body, target)
+				if status == 200 {
+					success++
+				} else {
+					errors++
+				}
 			}
 		}()
 	}
