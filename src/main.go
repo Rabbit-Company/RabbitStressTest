@@ -25,7 +25,7 @@ var success int = 0
 var errors int = 0
 
 func init() {
-	flag.StringVar(&target, "t", "https://google.com", "Specify target / url.")
+	flag.StringVar(&target, "t", "http://127.0.0.1", "Specify target / url.")
 	flag.IntVar(&req, "r", 100, "Specify number of requests.")
 	flag.IntVar(&duration, "d", 0, "Specify duration in seconds.")
 	flag.IntVar(&delay, "w", 1, "Specify delay in milliseconds.")
