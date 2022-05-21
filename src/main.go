@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"github.com/valyala/fasthttp"
+	"github.com/aquasecurity/table"
 	"sync"
 	"time"
 )
@@ -20,15 +22,17 @@ var target string
 var req int
 var duration int
 var delay int
+var workers int
 
 var success int = 0
 var errors int = 0
 
 func init() {
-	flag.StringVar(&target, "t", "http://127.0.0.1", "Specify target / url.")
+	flag.StringVar(&target, "u", "http://127.0.0.1", "Specify URL / target.")
 	flag.IntVar(&req, "r", 100, "Specify number of requests.")
-	flag.IntVar(&duration, "d", 0, "Specify duration in seconds.")
-	flag.IntVar(&delay, "w", 1, "Specify delay in milliseconds.")
+	flag.IntVar(&duration, "t", 0, "Specify duration in seconds.")
+	flag.IntVar(&delay, "d", 1, "Specify delay in milliseconds.")
+	flag.IntVar(&workers, "w", 10, "Specify number of workers per routine.")
 	flag.Parse()
 }
 
@@ -42,14 +46,20 @@ func main() {
 	fmt.Println("╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝ ╚═╝   ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ")
 	fmt.Println(reset)
 
-	fmt.Println("Target: " + blue + target + reset)
+	t := table.New(os.Stdout)
+	t.SetLineStyle(table.StyleBlue)
+	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
+
 	if duration != 0 {
 		req = maxInt
-		fmt.Printf("Duration: %s%ds%s\n", blue, duration, reset)
+		t.SetHeaders("Target", "Duration", "Workers", "Delay")
+		t.AddRow(target, fmt.Sprintf("%ds", duration), fmt.Sprintf("%d", workers), fmt.Sprintf("%dms", delay))
 	} else {
-		fmt.Printf("Requests: %s%d%s\n", blue, req, reset)
+		t.SetHeaders("Target", "Requests", "Workers", "Delay")
+		t.AddRow(target, fmt.Sprintf("%d", req), fmt.Sprintf("%d", workers), fmt.Sprintf("%dms", delay))
 	}
-	fmt.Printf("Delay: %s%dms%s\n", blue, delay, reset)
+	t.Render()
+	fmt.Println("")
 
 	var wg sync.WaitGroup
 
@@ -62,7 +72,7 @@ func main() {
 	}
 
 	start := time.Now()
-	for i := 1; i <= req/10; i++ {
+	for i := 1; i <= req/workers; i++ {
 		if duration != 0 {
 			if time.Since(start).Seconds() >= float64(duration) {
 				break
@@ -73,7 +83,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			var body []byte
-			for j := 1; j <= 10; j++ {
+			for j := 1; j <= workers; j++ {
 				status, _, _ := client.Get(body, target)
 				if status == 200 {
 					success++
@@ -85,20 +95,22 @@ func main() {
 	}
 	wg.Wait()
 	secs := time.Since(start).Seconds()
-	fmt.Printf("\n%s%d%s requests where performed in %s%.2fs%s\n", green, success+errors, reset, green, secs, reset)
-	fmt.Printf("---------------------\n")
-	fmt.Printf("Success: %s%d%s\n", green, success, reset)
-	if errors == 0 {
-		fmt.Printf("Errors: %s%d%s\n", green, errors, reset)
-		fmt.Printf("---------------------\n")
-		fmt.Printf("Error rate: %s%.2f%%%s\n", green, (float32(errors) / float32(success+errors) * 100), reset)
-	} else {
-		fmt.Printf("Errors: %s%d%s\n", red, errors, reset)
-		fmt.Printf("---------------------\n")
-		fmt.Printf("Error rate: %s%.2f%%%s\n", red, (float32(errors) / float32(success+errors) * 100), reset)
-	}
-	fmt.Printf("---------------------\n")
-	fmt.Printf("Requests per second: %s%.2f%s\n", green, float32(success+errors)/float32(secs), reset)
 
-	fmt.Println(reset)
+	errorRate := (float32(errors) / float32(success+errors) * 100)
+
+	t = table.New(os.Stdout)
+	if errors == 0 {
+		t.SetLineStyle(table.StyleGreen)
+	} else if errorRate < 50 {
+		t.SetLineStyle(table.StyleYellow)
+	} else {
+		t.SetLineStyle(table.StyleRed)
+	}
+
+	t.SetHeaders("Requests", "Time", "Success", "Errors", "Error rate", "Requests per second")
+	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
+
+	t.AddRow(fmt.Sprintf("%d", success+errors), fmt.Sprintf("%.2fs", secs), fmt.Sprintf("%d", success), fmt.Sprintf("%d", errors), fmt.Sprintf("%.2f%%", errorRate), fmt.Sprintf("%.2f", float32(success+errors)/float32(secs)))
+	t.Render()
+	fmt.Println("")
 }
