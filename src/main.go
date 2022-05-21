@@ -46,6 +46,20 @@ func main() {
 	fmt.Println("╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝ ╚═╝   ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ")
 	fmt.Println(reset)
 
+	//Validation
+	if req < 1 {
+		req = 100
+	}
+	if duration < 0 {
+		duration = 0
+	}
+	if delay < 0 {
+		delay = 0
+	}
+	if workers < 1 {
+		workers = 1
+	}
+
 	t := table.New(os.Stdout)
 	t.SetLineStyle(table.StyleBlue)
 	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
