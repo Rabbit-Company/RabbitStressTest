@@ -25,6 +25,8 @@ var workers int
 var success int = 0
 var errors int = 0
 
+var deliveryTimes []int64 = make([]int64, 0)
+
 func init() {
 	flag.StringVar(&target, "u", "http://127.0.0.1", "Specify URL / target.")
 	flag.IntVar(&req, "r", 100, "Specify number of requests.")
@@ -96,9 +98,11 @@ func main() {
 			defer wg.Done()
 			var body []byte
 			for j := 1; j <= workers; j++ {
+				start2 := time.Now()
 				status, _, _ := client.Get(body, target)
 				if status == 200 {
 					success++
+					deliveryTimes = append(deliveryTimes, time.Since(start2).Milliseconds())
 				} else {
 					errors++
 				}
@@ -109,6 +113,11 @@ func main() {
 	secs := time.Since(start).Seconds()
 
 	errorRate := (float32(errors) / float32(success+errors) * 100)
+	var total int64 = 0
+	for _, number := range deliveryTimes {
+		total = total + number
+	}
+	average := total / int64(len(deliveryTimes))
 
 	t = table.New(os.Stdout)
 	if errors == 0 {
@@ -119,10 +128,10 @@ func main() {
 		t.SetLineStyle(table.StyleRed)
 	}
 
-	t.SetHeaders("Requests", "Time", "Success", "Errors", "Error rate", "Requests per second")
-	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
+	t.SetHeaders("Requests", "Time", "Success", "Errors", "Error rate", "Requests per second", "Time per request")
+	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
 
-	t.AddRow(fmt.Sprintf("%d", success+errors), fmt.Sprintf("%.2fs", secs), fmt.Sprintf("%d", success), fmt.Sprintf("%d", errors), fmt.Sprintf("%.2f%%", errorRate), fmt.Sprintf("%.2f", float32(success+errors)/float32(secs)))
+	t.AddRow(fmt.Sprintf("%d", success+errors), fmt.Sprintf("%.2fs", secs), fmt.Sprintf("%d", success), fmt.Sprintf("%d", errors), fmt.Sprintf("%.2f%%", errorRate), fmt.Sprintf("%.2f", float32(success+errors)/float32(secs)), fmt.Sprintf("%dms", average))
 	t.Render()
 	fmt.Println("")
 }
