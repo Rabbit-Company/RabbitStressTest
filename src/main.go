@@ -56,8 +56,8 @@ func main() {
 	if delay < 0 {
 		delay = 0
 	}
-	if workers < 1 {
-		workers = 1
+	if workers > req {
+		workers = req
 	}
 
 	t := table.New(os.Stdout)
