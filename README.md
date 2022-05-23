@@ -2,7 +2,7 @@
 
 Simple terminal program for stress testing websites.
 
-![image](https://user-images.githubusercontent.com/44822563/169651751-9289f6e3-2062-49fb-9968-f16e0e4b14c7.png)
+![image](https://user-images.githubusercontent.com/44822563/169880675-6f85461d-48c6-4eb8-9e5c-8d5703b789c0.png)
 
 ## Installation
 
