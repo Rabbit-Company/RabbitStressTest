@@ -13,6 +13,7 @@ import (
 // Colors
 var reset string = "\033[0m"
 var green string = "\033[32m"
+var blue string = "\033[34m"
 
 const maxInt int = int(^uint(0) >> 1)
 
@@ -44,7 +45,12 @@ func main() {
 	fmt.Println("██╔══██╗██╔══██║██╔══██╗██╔══██╗██║   ██║       ╚════██║   ██║   ██╔══██╗██╔══╝  ╚════██║╚════██║       ██║   ██╔══╝  ╚════██║   ██║   ")
 	fmt.Println("██║  ██║██║  ██║██████╔╝██████╔╝██║   ██║       ███████║   ██║   ██║  ██║███████╗███████║███████║       ██║   ███████╗███████║   ██║   ")
 	fmt.Println("╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝ ╚═╝   ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ")
-	fmt.Println(reset)
+
+	fmt.Println(blue)
+	fmt.Println("┬┌┐┌┌─┐┬ ┬┌┬┐")
+	fmt.Println("││││├─┘│ │ │ ")
+	fmt.Println("┴┘└┘┴  └─┘ ┴ ")
+	fmt.Printf(reset)
 
 	//Validation
 	if req < 1 {
@@ -73,7 +79,11 @@ func main() {
 		t.AddRow(target, fmt.Sprintf("%d", req), fmt.Sprintf("%d", workers), fmt.Sprintf("%dms", delay))
 	}
 	t.Render()
-	fmt.Println("")
+	fmt.Println(green)
+	fmt.Println("┌─┐┬ ┬┌┬┐┌─┐┬ ┬┌┬┐")
+	fmt.Println("│ ││ │ │ ├─┘│ │ │ ")
+	fmt.Println("└─┘└─┘ ┴ ┴  └─┘ ┴ ")
+	fmt.Printf(reset)
 
 	var wg sync.WaitGroup
 
@@ -114,11 +124,19 @@ func main() {
 
 	errorRate := (float32(errors) / float32(success+errors) * 100)
 	var total int64 = 0
+	var slowest int64 = 0
+	var fastest int64 = 86400000
 	for _, number := range deliveryTimes {
+		if number > slowest {
+			slowest = number
+		}
+		if number < fastest {
+			fastest = number
+		}
 		total = total + number
 	}
-	average := total;
-	if(len(deliveryTimes) != 0){
+	average := total
+	if len(deliveryTimes) != 0 {
 		average = total / int64(len(deliveryTimes))
 	}
 
@@ -131,10 +149,31 @@ func main() {
 		t.SetLineStyle(table.StyleRed)
 	}
 
-	t.SetHeaders("Requests", "Time", "Success", "Errors", "Error rate", "Requests per second", "Time per request")
-	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
+	t.SetHeaders("Requests", "Time", "Success", "Errors", "Error rate", "Requests per second")
+	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter, table.AlignCenter)
 
-	t.AddRow(fmt.Sprintf("%d", success+errors), fmt.Sprintf("%.2fs", secs), fmt.Sprintf("%d", success), fmt.Sprintf("%d", errors), fmt.Sprintf("%.2f%%", errorRate), fmt.Sprintf("%.2f", float32(success+errors)/float32(secs)), fmt.Sprintf("%dms", average))
+	t.AddRow(fmt.Sprintf("%d", success+errors), fmt.Sprintf("%.2fs", secs), fmt.Sprintf("%d", success), fmt.Sprintf("%d", errors), fmt.Sprintf("%.2f%%", errorRate), fmt.Sprintf("%.2f", float32(success+errors)/float32(secs)))
+	t.Render()
+
+	fmt.Println(green)
+	fmt.Println("┬─┐┌─┐┌─┐ ┬ ┬┌─┐┌─┐┌┬┐┌─┐")
+	fmt.Println("├┬┘├┤ │─┼┐│ │├┤ └─┐ │ └─┐")
+	fmt.Println("┴└─└─┘└─┘└└─┘└─┘└─┘ ┴ └─┘")
+	fmt.Printf(reset)
+
+	t = table.New(os.Stdout)
+	if errors == 0 {
+		t.SetLineStyle(table.StyleGreen)
+	} else if errorRate < 50 {
+		t.SetLineStyle(table.StyleYellow)
+	} else {
+		t.SetLineStyle(table.StyleRed)
+	}
+
+	t.SetHeaders("Fastest", "Average", "Slowest")
+	t.SetAlignment(table.AlignCenter, table.AlignCenter, table.AlignCenter)
+
+	t.AddRow(fmt.Sprintf("%dms", fastest), fmt.Sprintf("%dms", average), fmt.Sprintf("%dms", slowest))
 	t.Render()
 	fmt.Println("")
 }
