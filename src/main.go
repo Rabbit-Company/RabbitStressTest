@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/aquasecurity/table"
 	"github.com/valyala/fasthttp"
+	"github.com/wcharczuk/go-chart/v2"
 	"os"
 	"sync"
 	"time"
@@ -176,4 +177,49 @@ func main() {
 	t.AddRow(fmt.Sprintf("%dms", fastest), fmt.Sprintf("%dms", average), fmt.Sprintf("%dms", slowest))
 	t.Render()
 	fmt.Println("")
+
+	stats := make([]float64, len(deliveryTimes))
+	stats2 := make([]float64, len(deliveryTimes))
+
+	for i := range deliveryTimes {
+		stats2[i] = float64(i)
+		stats[i] = float64(deliveryTimes[i])
+	}
+
+	graph := chart.Chart{
+		XAxis: chart.XAxis{
+			Name: "Request",
+			Style: chart.Style{
+				TextRotationDegrees: 45,
+			},
+			ValueFormatter: func(v interface{}) string {
+				return fmt.Sprintf("%d", int(v.(float64)))
+			},
+		},
+		YAxis: chart.YAxis{
+			Name: "Latency",
+			ValueFormatter: func(v interface{}) string {
+				return fmt.Sprintf("%d ms", int(v.(float64)))
+			},
+		},
+		Series: []chart.Series{
+			chart.ContinuousSeries{
+				Style: chart.Style{
+					StrokeColor: chart.GetDefaultColor(0).WithAlpha(64),
+					FillColor:   chart.GetDefaultColor(0).WithAlpha(64),
+				},
+				Name: target,
+				XValues: stats2,
+				YValues: stats,
+			},
+		},
+	}
+
+	graph.Elements = []chart.Renderable{
+		chart.Legend(&graph),
+	}
+
+	f, _ := os.Create("stats.png")
+	defer f.Close()
+	graph.Render(chart.PNG, f)
 }
