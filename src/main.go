@@ -23,6 +23,7 @@ var req int
 var duration int
 var delay int
 var workers int
+var graph bool
 
 var success int = 0
 var errors int = 0
@@ -35,6 +36,7 @@ func init() {
 	flag.IntVar(&duration, "t", 0, "Specify duration in seconds.")
 	flag.IntVar(&delay, "d", 1, "Specify delay in milliseconds.")
 	flag.IntVar(&workers, "w", 10, "Specify number of workers per routine.")
+	flag.BoolVar(&graph, "g", false, "Create a graph with response times and store it as stats.png")
 	flag.Parse()
 }
 
@@ -178,6 +180,12 @@ func main() {
 	t.Render()
 	fmt.Println("")
 
+	if graph {
+		createGraph()
+	}
+}
+
+func createGraph() {
 	stats := make([]float64, len(deliveryTimes))
 	stats2 := make([]float64, len(deliveryTimes))
 
@@ -208,7 +216,7 @@ func main() {
 					StrokeColor: chart.GetDefaultColor(0).WithAlpha(64),
 					FillColor:   chart.GetDefaultColor(0).WithAlpha(64),
 				},
-				Name: target,
+				Name:    target,
 				XValues: stats2,
 				YValues: stats,
 			},
