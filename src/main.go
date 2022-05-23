@@ -117,7 +117,10 @@ func main() {
 	for _, number := range deliveryTimes {
 		total = total + number
 	}
-	average := total / int64(len(deliveryTimes))
+	average := total;
+	if(len(deliveryTimes) != 0){
+		average = total / int64(len(deliveryTimes))
+	}
 
 	t = table.New(os.Stdout)
 	if errors == 0 {
